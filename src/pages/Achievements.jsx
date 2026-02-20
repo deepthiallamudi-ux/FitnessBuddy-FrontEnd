@@ -43,6 +43,25 @@ export default function Achievements() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
+      // Fetch workouts to calculate leaderboard points
+      const { data: workouts } = await supabase
+        .from("workouts")
+        .select("duration, calories")
+        .eq("user_id", user.id)
+
+      // Calculate leaderboard points (same formula as Leaderboard)
+      if (workouts && workouts.length > 0) {
+        const totalMinutes = workouts.reduce((sum, w) => sum + (w.duration || 0), 0)
+        const totalCalories = workouts.reduce((sum, w) => sum + (w.calories || 0), 0)
+        const workoutCount = workouts.length
+        
+        // Points: 10 per workout + 1 per minute + 0.1 per calorie
+        const points = (workoutCount * 10) + (totalMinutes * 1) + (totalCalories * 0.1)
+        setLeaderboardPoints(Math.round(points))
+      } else {
+        setLeaderboardPoints(0)
+      }
+
       setAchievements(data || [])
 
       // Fetch workouts for leaderboard points calculation
@@ -111,6 +130,8 @@ export default function Achievements() {
   }, 0)
 
   const totalPoints = totalAchievementPoints + leaderboardPoints
+
+  const totalPoints = totalAchievementPoints + leaderboardPoints
   const unlockedCount = achievements.length
 
   return (
@@ -155,11 +176,11 @@ export default function Achievements() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Leaderboard Points</p>
-                <p className="text-4xl font-bold text-orange-500 dark:text-orange-400">{leaderboardPoints}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">from workouts</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Points</p>
+                <p className="text-4xl font-bold text-secondary dark:text-darkGreen">{totalPoints}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">achievement points</p>
               </div>
-              <Flame className="w-12 h-12 text-orange-500 dark:text-orange-400" />
+              <Star className="w-12 h-12 text-secondary dark:text-darkGreen" />
             </div>
           </motion.div>
 
@@ -171,20 +192,22 @@ export default function Achievements() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Total Points</p>
-                <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{totalPoints}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">combined</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Progress</p>
+                <p className="text-4xl font-bold text-green-600 dark:text-green-400">
+                  {Math.round((unlockedCount / allBadges.length) * 100)}%
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">completion</p>
               </div>
-              <Trophy className="w-12 h-12 text-primary dark:text-accent" />
+              <Zap className="w-12 h-12 text-green-600 dark:text-green-400" />
             </div>
           </motion.div>
         </div>
 
-        {/* Points Breakdown */}
+        {/* Progress Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.5 }}
           className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg mb-8"
         >
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
@@ -240,7 +263,7 @@ export default function Achievements() {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(unlockedCount / allBadges.length) * 100}%` }}
-              transition={{ duration: 1, delay: 0.7 }}
+              transition={{ duration: 1, delay: 0.5 }}
               className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
             ></motion.div>
           </div>

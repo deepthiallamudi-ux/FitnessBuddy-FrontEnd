@@ -254,7 +254,15 @@ export default function Buddies() {
         .single()
 
       if (allUsers && currentProfile) {
-        const matches = matchUsers(currentProfile, allUsers)
+        const matches = matchUsers(currentProfile, allUsers)<<<<<<< HEAD
+=======
+    } catch (error) {
+      console.error("Error connecting buddy:", error)
+      alert("Error connecting: " + error.message)
+    }
+  }
+>>>>>>> 76d8392d3db2296b642ed387c11ffd7cc399108c
+
         // Combine dummy buddies with real matches
         setRecommended([...dummyBuddies, ...matches])
       } else {
