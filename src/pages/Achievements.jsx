@@ -63,20 +63,6 @@ export default function Achievements() {
       }
 
       setAchievements(data || [])
-
-      // Fetch workouts for leaderboard points calculation
-      const { data: workouts } = await supabase
-        .from("workouts")
-        .select("duration, calories")
-        .eq("user_id", user.id)
-
-      if (workouts && workouts.length > 0) {
-        const totalMinutes = workouts.reduce((sum, w) => sum + (w.duration || 0), 0)
-        const totalCalories = workouts.reduce((sum, w) => sum + (w.calories || 0), 0)
-        const workoutCount = workouts.length
-        const points = (workoutCount * 10) + (totalMinutes * 1) + (totalCalories * 0.1)
-        setLeaderboardPoints(Math.round(points))
-      }
     } catch (error) {
       console.error("Error fetching achievements:", error)
     } finally {
@@ -131,7 +117,6 @@ export default function Achievements() {
 
   const totalPoints = totalAchievementPoints + leaderboardPoints
 
-  const totalPoints = totalAchievementPoints + leaderboardPoints
   const unlockedCount = achievements.length
 
   return (

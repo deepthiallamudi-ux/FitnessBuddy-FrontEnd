@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext"
 import { ThemeProvider } from "./context/ThemeContext"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Layout from "./components/Layout"
+import DailyHealthTipModal from "./components/DailyHealthTipModal"
 import Login from "./pages/Login"
 import Dashboard from "./pages/Dashboard"
 import Profile from "./pages/Profile"
@@ -175,6 +176,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <DailyHealthTipModal />
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>

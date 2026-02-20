@@ -312,16 +312,23 @@ export const checkLeaderboardAchievements = async (userId) => {
 export const awardAchievement = async (userId, badgeType) => {
   try {
     // Check if achievement already exists
-    const { data: existing } = await supabase
-      .from("achievements")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("badge_type", badgeType)
-      .single()
+    try {
+      const { data: existing } = await supabase
+        .from("achievements")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("badge_type", badgeType)
+        .single()
 
-    if (existing) {
-      console.log(`Achievement already earned: ${badgeType}`)
-      return // Badge already awarded
+      if (existing) {
+        console.log(`Achievement already earned: ${badgeType}`)
+        return // Badge already awarded
+      }
+    } catch (err) {
+      // No existing achievement, proceed with creating one
+      if (!err.message?.includes("no rows")) {
+        throw err
+      }
     }
 
     // Award the badge
