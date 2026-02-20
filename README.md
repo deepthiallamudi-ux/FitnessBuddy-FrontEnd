@@ -66,12 +66,76 @@ A modern, feature-rich fitness social platform built with React 18, Vite, and Ta
    The app will run on `http://localhost:5173`
 
 
-## 🚢 Deployment Link
-Frontend:https://fitnesbudy.netlify.app/
+## 🚢 Deployment
 
+Frontend: https://fitnesbudy.netlify.app/
 
-## Backend API link:
-https://fitnessbuddy-backend.onrender.com
+Backend API: https://fitnessbuddy-backend.onrender.com
+
+## 📊 Pages Overview
+
+### Dashboard
+- Quick action buttons to navigate key features
+- Fitness statistics summary
+- Recent workouts preview
+- Call-to-action for profile completion
+
+### Profile
+- Edit personal information (age, location, goal, etc.)
+- Avatar upload to Supabase Storage
+- Profile completion status
+- Success/error notifications
+
+### Goals
+- Create new fitness goals
+- Track progress toward targets
+- Visual progress bars
+- Goal history and completion
+
+### Workouts
+- Log new workouts with type, duration, distance
+- Auto-calculate calories burned
+- View workout history
+- Weekly summary statistics
+- Celebrate weekly goal achievements
+
+### Buddies
+- View recommended fitness buddies with match scores
+- Connect with other users
+- View all connected buddies
+- Start conversations with buddies
+- Profile information and preferences
+
+### Challenges
+- Browse available challenges
+- Join challenges to compete
+- Track personal progress
+- Earn reward badges
+- Challenge creation (for users)
+
+### GymFinder
+- Search and filter gyms by type
+- View gym details (address, phone, hours, amenities)
+- Get directions via Google Maps
+- Save favorite gyms
+- Unsave gyms from favorites
+
+### Leaderboard
+- Individual rankings by points
+- Group leaderboards
+- Join fitness groups with alerts
+- Track personal rank and stats compared to others
+
+### Chat
+- See all connected buddies list
+- Send/receive real-time messages
+- Message history with timestamps
+- Responsive chat interface
+
+### Achievements
+- View earned badges and milestones
+- Celebrate accomplishments
+- Track achievement progress
 
 ## 📱 Responsive Design
 
@@ -80,12 +144,13 @@ https://fitnessbuddy-backend.onrender.com
 - **Desktop (> 1024px)**: Three columns, expanded sidebar, full layout
 
 
-## 🔗 Live Demo Link
+## 🔗 Links
 
+**Live Demo**: https://fitnesbudy.netlify.app/
 
-## Git Repo LInk
-FrontEnd:https://github.com/deepthiallamudi-ux/FitnessBuddy-FrontEnd.git
-Backend:https://github.com/deepthiallamudi-ux/FitnessBuddy-Backend.git
+**Git Repositories**:
+- FrontEnd: https://github.com/deepthiallamudi-ux/FitnessBuddy-FrontEnd.git
+- Backend: https://github.com/deepthiallamudi-ux/FitnessBuddy-Backend.git
 
 ## 👤 Support
 
