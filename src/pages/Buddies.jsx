@@ -254,14 +254,13 @@ export default function Buddies() {
         .single()
 
       if (allUsers && currentProfile) {
-        const matches = matchUsers(currentProfile, allUsers)<<<<<<< HEAD
-=======
-    } catch (error) {
-      console.error("Error connecting buddy:", error)
-      alert("Error connecting: " + error.message)
-    }
-  }
->>>>>>> 76d8392d3db2296b642ed387c11ffd7cc399108c
+        const matches = matchUsers(currentProfile, allUsers)
+// Check buddy achievements
+try {
+  await checkBuddyAchievements(user.id)
+} catch (err) {
+  console.error("Error checking buddy achievements:", err)
+}
 
         // Combine dummy buddies with real matches
         setRecommended([...dummyBuddies, ...matches])
