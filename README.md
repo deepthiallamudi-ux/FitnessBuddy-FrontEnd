@@ -146,7 +146,7 @@ Backend API: https://fitnessbuddy-backend.onrender.com
 
 ## 🔗 Links
 
-**Live Demo**: https://fitnesbudy.netlify.app/
+**Live Demo**: 
 
 **Git Repositories**:
 - FrontEnd: https://github.com/deepthiallamudi-ux/FitnessBuddy-FrontEnd.git
