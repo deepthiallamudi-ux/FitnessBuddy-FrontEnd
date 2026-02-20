@@ -9,16 +9,19 @@ import { ACHIEVEMENT_BADGES } from "../utils/achievementUtils"
 export default function Achievements() {
   const { user } = useAuth()
   const [achievements, setAchievements] = useState([])
+  const [leaderboardPoints, setLeaderboardPoints] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (user) fetchAchievements()
     
-    // Listen for updates
+    // Listen for updates with a small delay to ensure database sync
     const handleUpdate = () => {
       if (user) {
-        console.log("Achievement update event triggered, refetching...")
-        fetchAchievements()
+        console.log("Achievement update event triggered, refetching after 500ms...")
+        setTimeout(() => {
+          fetchAchievements()
+        }, 500)
       }
     }
     
@@ -39,6 +42,25 @@ export default function Achievements() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
+
+      // Fetch workouts to calculate leaderboard points
+      const { data: workouts } = await supabase
+        .from("workouts")
+        .select("duration, calories")
+        .eq("user_id", user.id)
+
+      // Calculate leaderboard points (same formula as Leaderboard)
+      if (workouts && workouts.length > 0) {
+        const totalMinutes = workouts.reduce((sum, w) => sum + (w.duration || 0), 0)
+        const totalCalories = workouts.reduce((sum, w) => sum + (w.calories || 0), 0)
+        const workoutCount = workouts.length
+        
+        // Points: 10 per workout + 1 per minute + 0.1 per calorie
+        const points = (workoutCount * 10) + (totalMinutes * 1) + (totalCalories * 0.1)
+        setLeaderboardPoints(Math.round(points))
+      } else {
+        setLeaderboardPoints(0)
+      }
 
       setAchievements(data || [])
     } catch (error) {
@@ -88,10 +110,12 @@ export default function Achievements() {
     mythic: "border-primary"
   }
 
-  const totalPoints = achievements.reduce((sum, a) => {
+  const totalAchievementPoints = achievements.reduce((sum, a) => {
     const badge = ACHIEVEMENT_BADGES[a.badge_type]
     return sum + (badge?.points || 0)
   }, 0)
+
+  const totalPoints = totalAchievementPoints + leaderboardPoints
 
   const unlockedCount = achievements.length
 
@@ -137,11 +161,11 @@ export default function Achievements() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Points</p>
-                <p className="text-4xl font-bold text-secondary dark:text-darkGreen">{totalPoints}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">achievement points</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Leaderboard Points</p>
+                <p className="text-4xl font-bold text-orange-600 dark:text-orange-400">{leaderboardPoints}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">from workouts</p>
               </div>
-              <Star className="w-12 h-12 text-secondary dark:text-darkGreen" />
+              <Flame className="w-12 h-12 text-orange-600 dark:text-orange-400" />
             </div>
           </motion.div>
 
@@ -153,22 +177,76 @@ export default function Achievements() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Progress</p>
-                <p className="text-4xl font-bold text-green-600 dark:text-green-400">
-                  {Math.round((unlockedCount / allBadges.length) * 100)}%
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">completion</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Achievement Points</p>
+                <p className="text-4xl font-bold text-secondary dark:text-darkGreen">{totalAchievementPoints}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">from badges</p>
               </div>
-              <Zap className="w-12 h-12 text-green-600 dark:text-green-400" />
+              <Star className="w-12 h-12 text-secondary dark:text-darkGreen" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-2xl p-6 shadow-lg border-2 border-primary"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Total Points</p>
+                <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{totalPoints}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">combined score</p>
+              </div>
+              <Trophy className="w-12 h-12 text-primary" />
             </div>
           </motion.div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Stats Breakdown */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg mb-8 mt-8"
+        >
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Points Breakdown</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-600 dark:text-gray-400">Achievement Points</span>
+                <span className="font-semibold text-secondary dark:text-darkGreen">{totalAchievementPoints}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${totalPoints > 0 ? (totalAchievementPoints / totalPoints) * 100 : 0}%` }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="h-full bg-gradient-to-r from-secondary to-darkGreen rounded-full"
+                ></motion.div>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-600 dark:text-gray-400">Leaderboard Points</span>
+                <span className="font-semibold text-orange-600 dark:text-orange-400">{leaderboardPoints}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${totalPoints > 0 ? (leaderboardPoints / totalPoints) * 100 : 0}%` }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="h-full bg-gradient-to-r from-orange-500 to-red-600 rounded-full"
+                ></motion.div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Achievement Progress Bar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
           className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg mb-8"
         >
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -178,7 +256,7 @@ export default function Achievements() {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(unlockedCount / allBadges.length) * 100}%` }}
-              transition={{ duration: 1, delay: 0.5 }}
+              transition={{ duration: 1, delay: 0.6 }}
               className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
             ></motion.div>
           </div>

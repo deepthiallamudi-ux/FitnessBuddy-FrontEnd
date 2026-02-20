@@ -309,16 +309,23 @@ export const checkLeaderboardAchievements = async (userId) => {
 export const awardAchievement = async (userId, badgeType) => {
   try {
     // Check if achievement already exists
-    const { data: existing } = await supabase
-      .from("achievements")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("badge_type", badgeType)
-      .single()
+    try {
+      const { data: existing } = await supabase
+        .from("achievements")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("badge_type", badgeType)
+        .single()
 
-    if (existing) {
-      console.log(`Achievement already earned: ${badgeType}`)
-      return // Badge already awarded
+      if (existing) {
+        console.log(`Achievement already earned: ${badgeType}`)
+        return // Badge already awarded
+      }
+    } catch (err) {
+      // No existing achievement, proceed with creating one
+      if (!err.message?.includes("no rows")) {
+        throw err
+      }
     }
 
     // Award the badge
@@ -377,7 +384,7 @@ export const awardAchievement = async (userId, badgeType) => {
     console.log(`Profile updated: points updated to ${newPoints}`)
 
     // Emit event to notify UI of update
-    window.dispatchEvent(new CustomEvent("achievementsUpdate", { detail: { userId, badgeType } }))
+    window.dispatchEvent(new Event("achievementsUpdate"))
 
     console.log(`Achievement awarded: ${badgeType} (+${badge.points} points)`)
     return data

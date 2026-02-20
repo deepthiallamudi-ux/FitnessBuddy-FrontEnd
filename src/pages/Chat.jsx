@@ -17,9 +17,12 @@ export default function Chat() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Auto-load buddy from navigation state if passed from Buddies page
+  // Auto-load buddy from navigation state if passed from Buddies or BuddyProfile page
   useEffect(() => {
-    if (location.state?.buddyId) {
+    if (location.state?.buddy) {
+      setReceiverId(location.state.buddy.id)
+      setReceiverName(location.state.buddy.username || "")
+    } else if (location.state?.buddyId) {
       setReceiverId(location.state.buddyId)
       setReceiverName(location.state.buddyName || "")
     }

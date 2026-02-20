@@ -52,9 +52,8 @@ export default function Login() {
       if (error) {
         setMessage(`❌ Error: ${error.message || "Failed to create account"}`)
       } else {
-        // If email confirmation is disabled in Supabase, user can login immediately
-        // If enabled, show confirmation message
-        setMessage("✅ Account created successfully! You can now log in.")
+        // User must now login with their credentials
+        setMessage("✅ Account created successfully! Please log in with your credentials.")
         setEmail("")
         setPassword("")
         setTimeout(() => {

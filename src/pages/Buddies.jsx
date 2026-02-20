@@ -96,8 +96,18 @@ export default function Buddies() {
 
         if (allUsers && currentProfile) {
           const matches = matchUsers(currentProfile, allUsers)
+          
+          // Get IDs of connected and pending buddies to filter out
+          const connectedIds = new Set(buddyList?.map(b => b.buddy_id) || [])
+          const pendingIds = new Set(pendingList?.map(p => p.buddy_id) || [])
+          
+          // Filter out already connected or pending buddies from recommended
+          const filteredMatches = matches.filter(match => 
+            !connectedIds.has(match.id) && !pendingIds.has(match.id)
+          )
+          
           // Combine dummy buddies with real matches
-          setRecommended([...dummyBuddies, ...matches])
+          setRecommended([...dummyBuddies, ...filteredMatches])
         } else {
           // If no real users, show dummy buddies only
           setRecommended(dummyBuddies)
@@ -169,20 +179,40 @@ export default function Buddies() {
         return
       }
 
-      // Send as pending request, not directly connected
+      // Check if already connected
+      try {
+        const { data: existingConn } = await supabase
+          .from("buddies")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("buddy_id", buddyId)
+          .single()
+        
+        if (existingConn) {
+          alert("Already connected with this user!")
+          return
+        }
+      } catch (err) {
+        // No existing connection, continue
+        if (!err.message?.includes("no rows")) {
+          throw err
+        }
+      }
+
+      // Connect directly (no request needed)
       const { error } = await supabase.from("buddies").insert([
         {
           user_id: user.id,
           buddy_id: buddyId,
-          status: "pending"
+          status: "connected"
         }
       ])
 
       if (error) {
         if (error.message && error.message.includes("duplicate")) {
-          alert("Already sent a request to this user!")
+          alert("Already connected with this user!")
         } else if (error.message && error.message.includes("row-level security")) {
-          alert("✅ Request sent! (Setup your profile first if this is your first request)")
+          alert("✅ Connected! (Setup your profile first if this is your first connection)")
         } else {
           console.error("Error details:", error)
           throw error
@@ -190,31 +220,37 @@ export default function Buddies() {
         return
       }
 
-      alert("✅ Request sent! Waiting for them to accept...")
+      alert("✅ Connected! You can now share progress with them.")
       
-      // Fetch updated pending list
-      const { data: updatedPending } = await supabase
-        .from("buddies")
-        .select("buddy_id")
-        .eq("user_id", user.id)
-        .eq("status", "pending")
-
-      if (updatedPending && updatedPending.length > 0) {
-        const pendingIds = updatedPending.map(p => p.buddy_id)
-        const { data: pendingProfiles } = await supabase
-          .from("profiles")
-          .select("*")
-          .in("id", pendingIds)
-
-        if (pendingProfiles) {
-          setPendingRequests(pendingProfiles)
-        }
-      }
-
-      // Also update recommended list
-      const { data: allUsers } = await supabase
+      // Remove the buddy from recommended list
+      setRecommended(prev => prev.filter(buddy => buddy.id !== buddyId))
+      
+      // Add to connected list
+      const { data: buddy } = await supabase
         .from("profiles")
         .select("*")
+        .eq("id", buddyId)
+        .single()
+
+      if (buddy) {
+        setConnectedBuddies(prev => [...prev, buddy])
+      }
+
+      // Check for social butterfly achievement
+      const { data: connectedCount } = await supabase
+        .from("buddies")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .eq("status", "connected")
+
+      if (connectedCount?.length >= 5) {
+        await checkBuddyAchievements(user.id)
+      }
+    } catch (error) {
+      console.error("Error connecting buddy:", error)
+      alert("Error connecting: " + error.message)
+    }
+  }
 
       const { data: currentProfile } = await supabase
         .from("profiles")
@@ -260,6 +296,9 @@ export default function Buddies() {
 
       alert("✅ Request accepted!")
 
+      // Remove the buddy from recommended list
+      setRecommended(prev => prev.filter(buddy => buddy.id !== requesterId))
+      
       // Refresh incoming and connected lists
       const { data: incomingList } = await supabase
         .from("buddies")

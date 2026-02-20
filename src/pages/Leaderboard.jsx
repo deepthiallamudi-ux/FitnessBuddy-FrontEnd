@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { useAuth } from "../context/AuthContext"
-import { Trophy, Users, Flame, Medal, Target, TrendingUp, Check, X, MessageCircle, UserPlus } from "lucide-react"
+import { Trophy, Users, Flame, Medal, Target, TrendingUp, Check, X, MessageCircle, UserPlus, CheckCircle } from "lucide-react"
 import PageTransition from "../components/PageTransition"
 import { checkLeaderboardAchievements } from "../utils/achievementUtils"
 
@@ -112,13 +112,12 @@ export default function Leaderboard() {
         stats.points = (stats.workouts * 10) + (stats.minutes * 1) + (stats.calories * 0.1)
       })
 
-      // Sort by points descending
+      // Sort by points descending (show all users, even with zero activity)
       const sortedLeaderboard = Object.values(userStats)
-        .filter(user => user.points > 0) // Show only users with activity
         .sort((a, b) => b.points - a.points)
         .map((userStat, index) => ({ ...userStat, rank: index + 1 }))
 
-      console.log(`Leaderboard created with ${sortedLeaderboard.length} active users`)
+      console.log(`Leaderboard created with ${sortedLeaderboard.length} users`)
       setLeaderboard(sortedLeaderboard)
 
       // Calculate user's rank
@@ -281,6 +280,21 @@ export default function Leaderboard() {
       .select("*")
       .eq("user_id", member.id)
 
+    // Fetch connection status
+    const { data: connectionStatus } = await supabase
+      .from("buddies")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("buddy_id", member.id)
+      .single()
+
+    // Update selected buddy with connection status
+    if (connectionStatus) {
+      setSelectedBuddy({ ...member, connectionStatus: connectionStatus.status })
+    } else {
+      setSelectedBuddy({ ...member, connectionStatus: null })
+    }
+
     setBuddyAchievements(achievements || [])
     setBuddyChallenges(challenges || [])
   }
@@ -301,22 +315,59 @@ export default function Leaderboard() {
   const handleConnectBuddy = async () => {
     if (selectedBuddy && user) {
       try {
-        const { error } = await supabase.from("buddy_connections").insert([
+        // Check if already connected
+        try {
+          const { data: existingConnection } = await supabase
+            .from("buddies")
+            .select("status")
+            .eq("user_id", user.id)
+            .eq("buddy_id", selectedBuddy.id)
+            .single()
+
+          if (existingConnection) {
+            alert("Already connected with this user!")
+            return
+          }
+        } catch (err) {
+          // No existing connection, continue
+          if (!err.message?.includes("no rows")) {
+            throw err
+          }
+        }
+
+        // Connect directly (immediate connection, no request needed)
+        const { error } = await supabase.from("buddies").insert([
           {
-            requester_id: user.id,
-            receiver_id: selectedBuddy.id,
+            user_id: user.id,
+            buddy_id: selectedBuddy.id,
             status: "connected"
           }
         ])
 
         if (!error) {
-          setAlertMessage(`✅ You are now connected with ${selectedBuddy.username}! 🎉`)
+          setAlertMessage(`✅ Connected with ${selectedBuddy.username}! 🎉`)
           setShowAlert(true)
           setTimeout(() => setShowAlert(false), 3000)
           closeBuddyModal()
+        } else if (error.message?.includes("duplicate")) {
+          alert("Already connected with this user!")
+        } else if (error.message?.includes("row-level security")) {
+          setAlertMessage("✅ Connected! Please ensure your profile is set up.")
+          setShowAlert(true)
+          setTimeout(() => setShowAlert(false), 3000)
+          closeBuddyModal()
+        } else {
+          throw error
         }
       } catch (error) {
         console.error("Error connecting buddy:", error)
+        if (error.message?.includes("row-level security")) {
+          setAlertMessage("✅ Connected! Please ensure your profile is set up.")
+          setShowAlert(true)
+          setTimeout(() => setShowAlert(false), 3000)
+        } else {
+          alert("Error connecting: " + error.message)
+        }
       }
     }
   }
@@ -829,10 +880,31 @@ export default function Leaderboard() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleConnectBuddy}
-                    className="flex-1 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                    disabled={selectedBuddy?.connectionStatus === "connected" || selectedBuddy?.connectionStatus === "pending"}
+                    className={`flex-1 py-3 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2 ${
+                      selectedBuddy?.connectionStatus === "connected"
+                        ? "bg-green-500 cursor-default"
+                        : selectedBuddy?.connectionStatus === "pending"
+                        ? "bg-yellow-500 cursor-default"
+                        : "bg-gradient-to-r from-primary to-secondary hover:shadow-lg"
+                    }`}
                   >
-                    <UserPlus className="w-4 h-4" />
-                    Connect
+                    {selectedBuddy?.connectionStatus === "connected" ? (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Connected ✓
+                      </>
+                    ) : selectedBuddy?.connectionStatus === "pending" ? (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        Request Sent
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        Connect
+                      </>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>

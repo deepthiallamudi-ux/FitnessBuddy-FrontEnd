@@ -221,7 +221,7 @@ export default function Dashboard() {
             )}
             <div>
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mb-2">
-                Welcome, {profile?.username || "Champion"} 👋
+                {profile?.username ? `Welcome, ${profile.username}` : "Hi, user"} 👋
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-lg font-semibold italic">
                 "{randomMessage}"
