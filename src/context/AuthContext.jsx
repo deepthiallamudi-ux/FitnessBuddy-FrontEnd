@@ -28,13 +28,15 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password) => {
   try {
-    // First try standard signup
+    // Standard signup WITHOUT auto-login
+    // Set shouldCreateSession to false so user must login after signup
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: {}
+        data: {},
+        shouldCreateSession: false
       }
     })
     
@@ -43,13 +45,10 @@ export const AuthProvider = ({ children }) => {
       return { data: null, error }
     }
     
-    // If signup successful, check if user is already authenticated
-    // If email confirmation is disabled in Supabase, session is immediate
-    // If email confirmation is enabled, user needs email verification
-    const { data: sessionData } = await supabase.auth.getSession()
+    // Ensure user is logged out after signup, even if a session was created
+    await supabase.auth.signOut()
     
     console.log("SignUp Success:", data)
-    console.log("Session after signup:", sessionData)
     
     return { data, error: null }
   } catch (err) {

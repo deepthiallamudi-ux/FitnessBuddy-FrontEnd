@@ -28,10 +28,40 @@ const calculateDeadline = (goalType) => {
   return today.toISOString().split('T')[0]
 }
 
+// Aggregate daily workout data for graphs
+const aggregateDailyData = (workouts) => {
+  const dailyData = {}
+  
+  if (!workouts || workouts.length === 0) return []
+  
+  workouts.forEach(workout => {
+    const date = new Date(workout.created_at)
+    const dateKey = date.toISOString().split('T')[0] // YYYY-MM-DD format
+    
+    if (!dailyData[dateKey]) {
+      dailyData[dateKey] = {
+        date: dateKey,
+        calories: 0,
+        time: 0,
+        displayDate: new Date(dateKey).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
+    }
+    
+    dailyData[dateKey].calories += workout.calories || 0
+    dailyData[dateKey].time += workout.duration || 0
+  })
+  
+  // Sort by date and return last 30 days
+  return Object.values(dailyData)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(-30)
+}
+
 export default function Goals() {
   const { user } = useAuth()
   const [goals, setGoals] = useState([])
   const [workouts, setWorkouts] = useState([])
+  const [dailyData, setDailyData] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [celebratingGoal, setCelebratingGoal] = useState(null)
@@ -73,7 +103,10 @@ export default function Goals() {
       .eq("user_id", user.id)
 
     if (goalsData) setGoals(goalsData)
-    if (workoutsData) setWorkouts(workoutsData)
+    if (workoutsData) {
+      setWorkouts(workoutsData)
+      setDailyData(aggregateDailyData(workoutsData))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -268,6 +301,97 @@ export default function Goals() {
             New Goal
           </motion.button>
         </div>
+
+        {/* Daily Stats Graphs */}
+        {dailyData.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid md:grid-cols-2 gap-6 mb-8"
+          >
+            {/* Calories Burned Chart */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Flame className="w-6 h-6 text-orange-500" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Daily Calories Burned</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis 
+                    dataKey="displayDate" 
+                    stroke="#666"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="#666"
+                    style={{ fontSize: '12px' }}
+                    label={{ value: 'Calories', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff',
+                      border: '1px solid #ccc',
+                      borderRadius: '8px',
+                      padding: '8px'
+                    }}
+                    formatter={(value) => [`${value} cal`, 'Calories']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="calories" 
+                    stroke="#ff6b35" 
+                    dot={{ fill: '#ff6b35', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                    isAnimationActive={true}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Time Spent Chart */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-6 h-6 text-blue-500" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Daily Time Spent</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis 
+                    dataKey="displayDate" 
+                    stroke="#666"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="#666"
+                    style={{ fontSize: '12px' }}
+                    label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff',
+                      border: '1px solid #ccc',
+                      borderRadius: '8px',
+                      padding: '8px'
+                    }}
+                    formatter={(value) => [`${value} min`, 'Time']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="time" 
+                    stroke="#4a90e2" 
+                    dot={{ fill: '#4a90e2', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                    isAnimationActive={true}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
 
         {/* Add/Edit Goal Form */}
         {showForm && (

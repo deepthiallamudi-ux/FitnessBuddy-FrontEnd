@@ -18,6 +18,7 @@ export default function Profile() {
   const profileUserId = userId || user?.id
 
   const [username, setUsername] = useState("")
+  const [originalUsername, setOriginalUsername] = useState("")
   const [age, setAge] = useState("")
   const [location, setLocation] = useState("")
   const [fitnessGoal, setFitnessGoal] = useState("")
@@ -69,6 +70,7 @@ export default function Profile() {
 
       if (data) {
         setUsername(data.username || "")
+        setOriginalUsername(data.username || "")
         setAge(data.age || "")
         setLocation(data.location || "")
         setFitnessGoal(data.goal || "")
@@ -144,7 +146,30 @@ export default function Profile() {
 
 const handleSubmit = async (e) => {
   e.preventDefault()
+  
+  // Validate that username is not empty
+  if (!username.trim()) {
+    alert("Please enter your name")
+    return
+  }
+  
   setLoading(true)
+
+  // Check if username already exists (unless it's the current user's existing username)
+  if (username && username !== originalUsername) {
+    const { data: existingUser, error: checkError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username.trim())
+      .neq("id", user.id) // Exclude current user
+      .single()
+
+    if (existingUser) {
+      alert("This name is already taken. Please choose a different name.")
+      setLoading(false)
+      return
+    }
+  }
 
   let uploadedAvatarUrl = avatarUrl
 
@@ -202,7 +227,7 @@ const handleSubmit = async (e) => {
       const response = await supabase.from("profiles").insert([{
         id: user.id,
         email: user.email,
-        username: username || user.email,
+        username: username,
         age: age ? parseInt(age) : null,
         location,
         goal: fitnessGoal,
@@ -224,7 +249,12 @@ const handleSubmit = async (e) => {
 
     if (error) {
       console.error("Profile error:", error)
-      alert("Error saving profile: " + error.message)
+      // Check for duplicate username constraint error
+      if (error.message && error.message.includes("duplicate key") && error.message.includes("username")) {
+        alert("This name is already taken. Please choose a different name.")
+      } else {
+        alert("Error saving profile: " + error.message)
+      }
     } else {
       setSuccess(true)
       setOriginalAvatarUrl(uploadedAvatarUrl)

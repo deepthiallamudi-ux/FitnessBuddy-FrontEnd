@@ -129,6 +129,7 @@ export const checkWorkoutAchievements = async (userId) => {
         return diff <= 7
       })
 
+      console.log(`Week warrior check: ${lastWeekWorkouts.length} workouts in last 7 days`)
       if (lastWeekWorkouts.length >= 7) {
         await awardAchievement(userId, "week_warrior")
       }
@@ -144,9 +145,10 @@ export const checkWorkoutAchievements = async (userId) => {
       })
 
       const totalCalories = lastMonthWorkouts.reduce((sum, w) => {
-        return sum + (w.calories || 0)
+        return sum + (parseFloat(w.calories) || 0)
       }, 0)
 
+      console.log(`Calorie blaster check: ${totalCalories} calories in last 30 days (${lastMonthWorkouts.length} workouts)`)
       if (totalCalories >= 5000) {
         await awardAchievement(userId, "calorie_blaster")
       }
@@ -155,6 +157,7 @@ export const checkWorkoutAchievements = async (userId) => {
     // Check for Streak Master badge (30-day workout streak)
     if (workouts && workouts.length > 0) {
       const hasStreak = checkWorkoutStreak(workouts, 30)
+      console.log(`Streak master check: ${hasStreak ? "HAS" : "NO"} 30-day streak`)
       if (hasStreak) {
         await awardAchievement(userId, "streak_master")
       }
@@ -309,14 +312,17 @@ export const checkLeaderboardAchievements = async (userId) => {
 export const awardAchievement = async (userId, badgeType) => {
   try {
     // Check if achievement already exists
-    const { data: existing } = await supabase
+    const { data: existing, error: checkError } = await supabase
       .from("achievements")
       .select("id")
       .eq("user_id", userId)
       .eq("badge_type", badgeType)
-      .single()
 
-    if (existing) {
+    if (checkError) {
+      console.error(`Error checking existing achievement for ${badgeType}:`, checkError)
+    }
+
+    if (existing && existing.length > 0) {
       console.log(`Achievement already earned: ${badgeType}`)
       return // Badge already awarded
     }
@@ -377,7 +383,7 @@ export const awardAchievement = async (userId, badgeType) => {
     console.log(`Profile updated: points updated to ${newPoints}`)
 
     // Emit event to notify UI of update
-    window.dispatchEvent(new CustomEvent("achievementsUpdate", { detail: { userId, badgeType } }))
+    window.dispatchEvent(new Event("achievementsUpdate"))
 
     console.log(`Achievement awarded: ${badgeType} (+${badge.points} points)`)
     return data

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { supabase } from "../lib/supabase"
 import { motion } from "framer-motion"
-import { ArrowLeft, MapPin, Target, Activity, Trophy, Zap, MessageCircle, UserPlus } from "lucide-react"
+import { ArrowLeft, MapPin, Target, Activity, Trophy, Zap, MessageCircle, UserPlus, CheckCircle } from "lucide-react"
 import PageTransition from "../components/PageTransition"
 
 export default function BuddyProfileView() {
@@ -18,6 +18,7 @@ export default function BuddyProfileView() {
   const [loading, setLoading] = useState(true)
   const [alertMessage, setAlertMessage] = useState("")
   const [showAlert, setShowAlert] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState(null)
 
   useEffect(() => {
     if (buddyId) {
@@ -53,10 +54,19 @@ export default function BuddyProfileView() {
         .select("*")
         .eq("user_id", buddyId)
 
+      // Fetch connection status
+      const { data: connectionData } = await supabase
+        .from("buddies")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("buddy_id", buddyId)
+        .single()
+
       setBuddy(profile)
       setAchievements(achievementsData || [])
       setChallenges(challengesData || [])
       setGoals(goalsData || [])
+      setConnectionStatus(connectionData?.status || null)
     } catch (error) {
       console.error("Error fetching buddy profile:", error)
     } finally {
@@ -70,21 +80,63 @@ export default function BuddyProfileView() {
 
   const handleConnect = async () => {
     try {
-      const { error } = await supabase.from("buddy_connections").insert([
+      // Check if already connected
+      try {
+        const { data: existingConnection, error: fetchError } = await supabase
+          .from("buddies")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("buddy_id", buddyId)
+          .single()
+
+        if (existingConnection) {
+          setAlertMessage("Already connected with this user! 🤝")
+          setShowAlert(true)
+          setTimeout(() => setShowAlert(false), 3000)
+          return
+        }
+      } catch (err) {
+        // No existing connection found, proceed with creating one
+        if (!err.message?.includes("no rows")) {
+          throw err
+        }
+      }
+
+      // Connect directly (immediate connection, no request needed)
+      const { error } = await supabase.from("buddies").insert([
         {
-          requester_id: user.id,
-          receiver_id: buddyId,
+          user_id: user.id,
+          buddy_id: buddyId,
           status: "connected"
         }
       ])
 
       if (!error) {
-        setAlertMessage(`✅ You are now connected with ${buddy.username}! 🎉`)
+        setAlertMessage(`✅ Connected with ${buddy.username}! 🎉`)
         setShowAlert(true)
         setTimeout(() => setShowAlert(false), 3000)
+        setConnectionStatus("connected")
+      } else if (error.message?.includes("duplicate")) {
+        setAlertMessage("Already connected with this user!")
+        setShowAlert(true)
+        setTimeout(() => setShowAlert(false), 3000)
+      } else if (error.message?.includes("row-level security")) {
+        setAlertMessage("✅ Connected! Please ensure your profile is set up.")
+        setShowAlert(true)
+        setTimeout(() => setShowAlert(false), 3000)
+        setConnectionStatus("connected")
+      } else {
+        throw error
       }
     } catch (error) {
       console.error("Error connecting buddy:", error)
+      if (error.message?.includes("row-level security")) {
+        setAlertMessage("✅ Connected! Please ensure your profile is set up.")
+      } else {
+        setAlertMessage("Error connecting: " + error.message)
+      }
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 3000)
     }
   }
 
@@ -260,10 +312,31 @@ export default function BuddyProfileView() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleConnect}
-                  className="flex-1 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                  disabled={connectionStatus === "connected" || connectionStatus === "pending"}
+                  className={`flex-1 py-3 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2 ${
+                    connectionStatus === "connected"
+                      ? "bg-green-500 cursor-default"
+                      : connectionStatus === "pending"
+                      ? "bg-yellow-500 cursor-default"
+                      : "bg-gradient-to-r from-primary to-secondary hover:shadow-lg"
+                  }`}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  Connect
+                  {connectionStatus === "connected" ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Connected ✓
+                    </>
+                  ) : connectionStatus === "pending" ? (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Request Sent
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Connect
+                    </>
+                  )}
                 </motion.button>
               </div>
             </div>

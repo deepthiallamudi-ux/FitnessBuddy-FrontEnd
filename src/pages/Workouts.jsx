@@ -101,6 +101,7 @@ export default function Workouts() {
       }
 
       const calories = duration * caloriesPerMinute
+      const isAddingNewWorkout = !editingId
 
       if (editingId) {
         // Update existing workout
@@ -148,13 +149,16 @@ export default function Workouts() {
       setNotes("")
       setShowForm(false)
       
-      // Award achievements based on workout activity
-      if (!editingId) {
+      // Award achievements only for new workouts, not edits
+      if (isAddingNewWorkout) {
         try {
           await checkWorkoutAchievements(user.id)
         } catch (error) {
           console.error("Error checking achievements:", error)
         }
+        
+        // Add a small delay to ensure database operations complete
+        await new Promise(resolve => setTimeout(resolve, 500))
       }
       
       fetchWorkouts()
@@ -169,8 +173,8 @@ export default function Workouts() {
 
   const handleEditWorkout = (workout) => {
     setType(workout.type)
-    setDuration(workout.duration)
-    setDistance(workout.distance || "")
+    setDuration(String(workout.duration || ""))
+    setDistance(String(workout.distance || ""))
     setNotes(workout.notes || "")
     setEditingId(workout.id)
     setShowForm(true)
