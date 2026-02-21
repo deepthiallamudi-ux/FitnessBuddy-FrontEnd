@@ -8,7 +8,7 @@ import CircularProgress from "../components/CircularProgress"
 import PageTransition from "../components/PageTransition"
 import useCounter from "../hooks/useCounter"
 import { Zap, Trophy, Users, Target, TrendingUp, Calendar, Flame, Clock, Dumbbell, MapPin, Gamepad2, Bell } from "lucide-react"
-
+hbkj/l;k
 export default function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
