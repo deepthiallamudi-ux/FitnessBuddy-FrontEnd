@@ -147,7 +147,7 @@ Backend API: https://fitnessbuddy-backend.onrender.com
 ## 🔗 Links
 
 **Live Demo**: 
-https://youtu.be/udPBWsEfgT0
+https://youtu.be/q6NQj6cFDNY
 
 **Git Repositories**:
 - FrontEnd: https://github.com/deepthiallamudi-ux/FitnessBuddy-FrontEnd.git
