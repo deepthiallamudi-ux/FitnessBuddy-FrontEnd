@@ -605,8 +605,8 @@ const handleSubmit = async (e) => {
             {/* Divider */}
             <div className="border-t-2 border-gray-200 dark:border-gray-700 my-8"></div>
 
-            {/* Achievements Section - Only show when viewing other users */}
-            {isViewingOther && (
+            {/* Achievements Section - Show for all users */}
+            {(isViewingOther || !isViewingOther) && (
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <span className="text-2xl">🏆</span>
