@@ -56,6 +56,7 @@ export default function Buddies() {
   const [viewMode, setViewMode] = useState("recommended") // recommended, connected, pending, incoming, or progress
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [connectedIds, setConnectedIds] = useState(new Set()) // Track connected buddy IDs
 
   useEffect(() => {
     if (!user) return
@@ -122,6 +123,7 @@ export default function Buddies() {
 
           if (connectedProfiles) {
             setConnectedBuddies(connectedProfiles)
+            setConnectedIds(new Set(buddyIds)) // Update connectedIds set
           }
         }
 
@@ -222,6 +224,9 @@ export default function Buddies() {
 
       alert("✅ Connected! You can now share progress with them.")
       
+      // Update connected IDs set
+      setConnectedIds(prev => new Set([...prev, buddyId]))
+      
       // Remove the buddy from recommended list
       setRecommended(prev => prev.filter(buddy => buddy.id !== buddyId))
       
@@ -298,6 +303,9 @@ try {
 
       alert("✅ Request accepted!")
 
+      // Update connected IDs set
+      setConnectedIds(prev => new Set([...prev, requesterId]))
+      
       // Remove the buddy from recommended list
       setRecommended(prev => prev.filter(buddy => buddy.id !== requesterId))
       
@@ -569,7 +577,7 @@ try {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {recommended.filter(buddy => {
                     // Exclude connected buddies and buddies with pending requests
-                    const isConnected = connectedBuddies.some(cb => cb.id === buddy.id)
+                    const isConnected = connectedIds.has(buddy.id) || connectedBuddies.some(cb => cb.id === buddy.id)
                     const hasPendingRequest = pendingRequests.some(pb => pb.id === buddy.id)
                     const searchLower = searchQuery.toLowerCase()
                     const matchesSearch = (
@@ -582,7 +590,7 @@ try {
                   }).length > 0 ? (
                     recommended
                       .filter(buddy => {
-                        const isConnected = connectedBuddies.some(cb => cb.id === buddy.id)
+                        const isConnected = connectedIds.has(buddy.id) || connectedBuddies.some(cb => cb.id === buddy.id)
                         const hasPendingRequest = pendingRequests.some(pb => pb.id === buddy.id)
                         const searchLower = searchQuery.toLowerCase()
                         const matchesSearch = (
@@ -660,13 +668,18 @@ try {
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <motion.button
-                            whileHover={{ scale: 1.05 }}
+                            whileHover={{ scale: connectedIds.has(buddy.id) ? 1 : 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleConnectBuddy(buddy.id)}
-                            className="flex-1 py-2 bg-gradient-to-r from-primary to-secondary text-light font-semibold rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2"
+                            onClick={() => !connectedIds.has(buddy.id) && handleConnectBuddy(buddy.id)}
+                            disabled={connectedIds.has(buddy.id)}
+                            className={`flex-1 py-2 font-semibold rounded-lg transition flex items-center justify-center gap-2 ${
+                              connectedIds.has(buddy.id)
+                                ? "bg-green-500 text-white cursor-default opacity-80"
+                                : "bg-gradient-to-r from-primary to-secondary text-light hover:shadow-lg"
+                            }`}
                           >
-                            <UserPlus className="w-4 h-4" />
-                            Connect
+                            <CheckCircle className="w-4 h-4" />
+                            {connectedIds.has(buddy.id) ? "Connected" : "Connect"}
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.05 }}

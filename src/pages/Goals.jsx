@@ -655,8 +655,14 @@ export default function Goals() {
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
                     const daysLeft = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
-                    const isOverdue = daysLeft < 0
+                    const isOverdue = daysLeft < 0 && goal.current < goal.target
                     const isToday = daysLeft === 0
+                    const isCompleted = goal.current >= goal.target
+                    
+                    // If goal is completed, don't show deadline badge
+                    if (isCompleted) {
+                      return null
+                    }
                     
                     return (
                       <span className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 ${
@@ -666,9 +672,9 @@ export default function Goals() {
                         'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
                       }`}>
                         <Calendar className="w-3 h-3" />
-                        {isOverdue ? `Overdue by ${Math.abs(daysLeft)}d` :
-                         isToday ? 'Due Today!' :
-                         `${daysLeft}d left`}
+                        {isOverdue ? `⚠️ Overdue by ${Math.abs(daysLeft)}d` :
+                         isToday ? '⏰ Due Today!' :
+                         `📅 ${daysLeft}d left`}
                       </span>
                     )
                   })()}
