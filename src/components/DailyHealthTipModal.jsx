@@ -26,8 +26,10 @@ export default function DailyHealthTipModal() {
   return (
     <AnimatePresence>
       {showTip && tip && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -66,7 +68,8 @@ export default function DailyHealthTipModal() {
               {tip.category.replace(/[-_]/g, " ").toUpperCase()}
             </span>
           </motion.div>
-        </div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   )
