@@ -313,7 +313,6 @@ export default function Buddies() {
     // Navigate to chat and pass buddy info
     navigate("/chat", { state: { buddyId: buddy.id, buddyName: buddy.username } })
   }
-
   return (
     <PageTransition>
       <div className="min-h-screen bg-gradient-to-br from-[#E3EED4] to-[#AEC3B0] dark:from-[#0F2A1D] dark:to-[#375534] p-6">
