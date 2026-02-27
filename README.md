@@ -68,7 +68,7 @@ A modern, feature-rich fitness social platform built with React 18, Vite, and Ta
 
 ## 🚢 Deployment
 
-Frontend: https://fitnesbudy.netlify.app/
+Frontend: https://fitnesbudyy.netlify.app/
 
 Backend API: https://fitnessbuddy-backend.onrender.com
 
