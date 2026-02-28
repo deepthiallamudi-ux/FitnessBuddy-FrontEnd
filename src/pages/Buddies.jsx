@@ -20,17 +20,6 @@ const dummyBuddies = [
     location: "Downtown",
     score: 8.5,
     isDummy: true
-  },
-  {
-    id: "dummy-buddy-2",
-    username: "Sarah Strength",
-    email: "sarah@fitbuddy.com",
-    avatar_url: null,
-    goal: "Build muscle",
-    workout: "Gym",
-    location: "Uptown",
-    score: 8.2,
-    isDummy: true
   }
 ]
 

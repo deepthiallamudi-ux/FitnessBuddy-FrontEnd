@@ -18,6 +18,7 @@ export default function Chat() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Auto-load buddy from navigation state if passed from Buddies or BuddyProfile page
+
   useEffect(() => {
     if (location.state?.buddy) {
       setReceiverId(location.state.buddy.id)
@@ -36,12 +37,6 @@ export default function Chat() {
         {
           id: "dummy-1",
           username: "Alex Trainer",
-          avatar_url: null,
-          isDummy: true
-        },
-        {
-          id: "dummy-2",
-          username: "Sarah Runner",
           avatar_url: null,
           isDummy: true
         }
@@ -77,18 +72,6 @@ export default function Chat() {
         {
           id: "dummy-1",
           username: "Alex Trainer",
-          avatar_url: null,
-          isDummy: true
-        },
-        {
-          id: "dummy-2",
-          username: "Sarah Runner",
-          avatar_url: null,
-          isDummy: true
-        },
-        {
-          id: "dummy-3",
-          username: "Mike CrossFit",
           avatar_url: null,
           isDummy: true
         }
