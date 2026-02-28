@@ -11,6 +11,7 @@ import { checkWorkoutAchievements, checkProgressShareAchievements } from "../uti
 export default function Workouts() {
   const { user } = useAuth()
   const [type, setType] = useState("")
+  const [customWorkoutName, setCustomWorkoutName] = useState("")
   const [duration, setDuration] = useState("")
   const [distance, setDistance] = useState("")
   const [notes, setNotes] = useState("")
@@ -70,6 +71,12 @@ export default function Workouts() {
       return
     }
 
+    // Check if custom workout name is provided when "Other" is selected
+    if (type === "Other" && !customWorkoutName.trim()) {
+      alert("Please enter a workout name for 'Other' type")
+      return
+    }
+
     // Check if distance is required for specific workout types
     const distanceRequiredTypes = ["Running", "Walking", "Cycling"]
     if (distanceRequiredTypes.includes(type) && !distance) {
@@ -102,13 +109,14 @@ export default function Workouts() {
 
       const calories = duration * caloriesPerMinute
       const isAddingNewWorkout = !editingId
+      const finalWorkoutType = type === "Other" ? customWorkoutName : type
 
       if (editingId) {
         // Update existing workout
         const { error } = await supabase
           .from("workouts")
           .update({
-            type,
+            type: finalWorkoutType,
             duration: parseFloat(duration),
             distance: distance ? parseFloat(distance) : null,
             calories,
@@ -128,7 +136,7 @@ export default function Workouts() {
         const { error } = await supabase.from("workouts").insert([
           {
             user_id: user.id,
-            type,
+            type: finalWorkoutType,
             duration: parseFloat(duration),
             distance: distance ? parseFloat(distance) : null,
             calories,
@@ -144,6 +152,7 @@ export default function Workouts() {
       }
 
       setType("")
+      setCustomWorkoutName("")
       setDuration("")
       setDistance("")
       setNotes("")
@@ -172,7 +181,15 @@ export default function Workouts() {
   }
 
   const handleEditWorkout = (workout) => {
-    setType(workout.type)
+    const presetTypes = ["Running", "Gym", "Yoga", "Cycling", "Swimming", "HIIT", "CrossFit", "Dancing", "Walking"]
+    const isPreset = presetTypes.includes(workout.type)
+    
+    setType(isPreset ? workout.type : "Other")
+    if (!isPreset) {
+      setCustomWorkoutName(workout.type)
+    } else {
+      setCustomWorkoutName("")
+    }
     setDuration(String(workout.duration || ""))
     setDistance(String(workout.distance || ""))
     setNotes(workout.notes || "")
@@ -525,7 +542,12 @@ export default function Workouts() {
                   <label className="block text-sm font-semibold mb-2">Workout Type *</label>
                   <select
                     value={type}
-                    onChange={(e) => setType(e.target.value)}
+                    onChange={(e) => {
+                      setType(e.target.value)
+                      if (e.target.value !== "Other") {
+                        setCustomWorkoutName("")
+                      }
+                    }}
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-900 transition"
                   >
                     <option value="">Select workout type</option>
@@ -541,6 +563,25 @@ export default function Workouts() {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+
+                {/* Custom Workout Name Input for "Other" type */}
+                {type === "Other" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className="block text-sm font-semibold mb-2">Custom Workout Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Boxing, Pilates, etc."
+                      value={customWorkoutName}
+                      onChange={(e) => setCustomWorkoutName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-900 transition"
+                    />
+                  </motion.div>
+                )}
 
                 <div>
                   <label className="block text-sm font-semibold mb-2">Duration (minutes) *</label>

@@ -21,6 +21,15 @@ export default function Dashboard() {
   const [reminders, setReminders] = useState([])
   const [reminderTime, setReminderTime] = useState("08:00")
   const [reminderFrequency, setReminderFrequency] = useState("daily")
+  const [selectedDays, setSelectedDays] = useState({
+    monday: false,
+    tuesday: false,
+    wednesday: false,
+    thursday: false,
+    friday: false,
+    saturday: false,
+    sunday: false
+  })
 
   useEffect(() => {
     if (!user) return
@@ -122,6 +131,7 @@ const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()
         id: Date.now(),
         time: reminderTime,
         frequency: reminderFrequency,
+        selectedDays: reminderFrequency === "custom" ? selectedDays : null,
         createdAt: new Date()
       }
       const updatedReminders = [...reminders, newReminder]
@@ -129,6 +139,15 @@ const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()
       localStorage.setItem(`reminders_${user.id}`, JSON.stringify(updatedReminders))
       alert(`✅ Reminder set for ${reminderTime}`)
       setReminderTime("08:00")
+      setSelectedDays({
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: false,
+        saturday: false,
+        sunday: false
+      })
     }
   }
 
@@ -485,6 +504,35 @@ const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()
             </div>
           </div>
 
+          {/* Day Selection for Custom Frequency */}
+          {reminderFrequency === "custom" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700"
+            >
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Select Days</p>
+              <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+                {Object.keys(selectedDays).map((day) => (
+                  <motion.button
+                    key={day}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedDays({ ...selectedDays, [day]: !selectedDays[day] })}
+                    className={`p-2 rounded-lg font-semibold transition capitalize ${
+                      selectedDays[day]
+                        ? "bg-primary text-light"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {day.slice(0, 3)}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {reminders.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Active Reminders:</p>
@@ -500,7 +548,15 @@ const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()
                     <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">{reminder.time}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">{reminder.frequency}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                        {reminder.frequency}
+                        {reminder.selectedDays && (
+                          <> - {Object.entries(reminder.selectedDays)
+                            .filter(([, selected]) => selected)
+                            .map(([day]) => day.slice(0, 3))
+                            .join(", ")}</>
+                        )}
+                      </p>
                     </div>
                   </div>
                   <motion.button

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import AnimatedBackground from "./AnimatedBackground"
-import ThemeToggle from "./ThemeToggle"
+import TopBar from "./TopBar"
 import DailyHealthTip from "./DailyHealthTip"
 import { motion } from "framer-motion"
 import { Menu, X, BarChart3, User, Target, Dumbbell, Users, Gamepad2, Star, MapPin, TrendingUp, Book, MessageCircle } from "lucide-react"
@@ -9,7 +9,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 
 export default function Layout({ children }) {
-  const { logout, user } = useAuth()
+  const { user } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [username, setUsername] = useState("")
@@ -70,6 +70,9 @@ export default function Layout({ children }) {
     <div className="relative min-h-screen flex text-gray-800 dark:text-gray-100 bg-gradient-to-br from-[#E3EED4] to-[#AEC3B0] dark:from-[#0F2A1D] dark:to-[#375534]">
 
       <AnimatedBackground />
+
+      {/* Top Bar with Logout and Theme Toggle */}
+      <TopBar />
 
       {/* Sidebar */}
       <motion.div
@@ -150,20 +153,7 @@ export default function Layout({ children }) {
           </motion.nav>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-          
-          <motion.button
-            whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={logout}
-            className="bg-gradient-to-r from-primary to-secondary text-light py-3 rounded-lg hover:shadow-lg transition w-full font-semibold"
-          >
-            {sidebarOpen ? "Logout" : "🚪"}
-          </motion.button>
-        </div>
+        {/* Removed from here - now in TopBar for visibility in all pages */}
       </motion.div>
 
       {/* Main Content */}

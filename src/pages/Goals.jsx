@@ -24,6 +24,9 @@ const calculateDeadline = (goalType) => {
     // End of current month
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
     return endOfMonth.toISOString().split('T')[0]
+  } else if (goalType === "other") {
+    // No automatic deadline for custom goals
+    return ""
   }
   return today.toISOString().split('T')[0]
 }
@@ -114,6 +117,12 @@ export default function Goals() {
 
     if (!formData.title || !formData.target) {
       alert("Please fill in all required fields")
+      return
+    }
+
+    // For "other" goal type, deadline is mandatory
+    if (goalTypeLocal === "other" && !formData.deadline) {
+      alert("Deadline is mandatory for custom goals. Please select a deadline date.")
       return
     }
 
@@ -426,11 +435,13 @@ export default function Goals() {
                     <option value="daily">Daily Goal</option>
                     <option value="weekly">Weekly Goal</option>
                     <option value="monthly">Monthly Goal</option>
+                    <option value="other">Other (Custom)</option>
                   </select>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {goalTypeLocal === "daily" && "⏱️ Deadline: Today"}
                     {goalTypeLocal === "weekly" && "📅 Deadline: 7 days from today"}
                     {goalTypeLocal === "monthly" && "📊 Deadline: End of month"}
+                    {goalTypeLocal === "other" && "🎯 Custom goal - set your own deadline"}
                   </p>
                 </div>
 
@@ -486,7 +497,9 @@ export default function Goals() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Deadline (Optional)</label>
+                  <label className="block text-sm font-semibold mb-2">
+                    Deadline {goalTypeLocal === "other" && <span className="text-red-500">*</span>} (Optional)
+                  </label>
                   <div className="relative">
                     <input
                       type="date"
@@ -496,14 +509,23 @@ export default function Goals() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    Auto: {(() => {
-                      const autoDeadline = calculateDeadline(goalTypeLocal)
-                      const date = new Date(autoDeadline)
-                      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                    })()}
-                    {formData.deadline && formData.deadline !== calculateDeadline(goalTypeLocal) && (
-                      <span className="text-orange-600 dark:text-orange-400 font-semibold">(custom)</span>
+                    {goalTypeLocal !== "other" && (
+                      <>
+                        <Calendar className="w-3 h-3" />
+                        Auto: {(() => {
+                          const autoDeadline = calculateDeadline(goalTypeLocal)
+                          const date = new Date(autoDeadline)
+                          return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                        })()}
+                        {formData.deadline && formData.deadline !== calculateDeadline(goalTypeLocal) && (
+                          <span className="text-orange-600 dark:text-orange-400 font-semibold">(custom)</span>
+                        )}
+                      </>
+                    )}
+                    {goalTypeLocal === "other" && (
+                      <>
+                        <span className="text-red-600 dark:text-red-400 font-semibold">This field is required for custom goals</span>
+                      </>
                     )}
                   </p>
                 </div>
@@ -561,7 +583,8 @@ export default function Goals() {
               { value: "all", label: "All Goals", color: "from-gray-400 to-gray-500" },
               { value: "daily", label: "📅 Daily", color: "from-blue-500 to-blue-600" },
               { value: "weekly", label: "📆 Weekly", color: "from-purple-500 to-purple-600" },
-              { value: "monthly", label: "📊 Monthly", color: "from-green-500 to-green-600" }
+              { value: "monthly", label: "📊 Monthly", color: "from-green-500 to-green-600" },
+              { value: "other", label: "🎯 Custom", color: "from-orange-500 to-orange-600" }
             ].map((filter) => (
               <motion.button
                 key={filter.value}
